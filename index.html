@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTS Code Finder — McNairn / AmerCare Royal</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ACR Brand Dark — navy base, Teal + Lime accents */
+    --bg: #060e1a;
+    --surface: #0c1828;
+    --surface2: #112035;
+    --border: #1e3550;
+    --accent: #96d54a;      /* ACR Lime */
+    --accent2: #00c4bb;     /* ACR Teal */
+    --acr-blue: #1a56c4;    /* ACR Blue (bright on dark) */
+    --text: #e8f0f8;
+    --muted: #6a8aaa;
+    --danger: #e05c5c;
+    --code-bg: #040b14;
+  }
+
+  :root.light {
+    /* ACR Brand Light — white base, Blue primary */
+    --bg: #eef3fa;
+    --surface: #ffffff;
+    --surface2: #dce8f5;
+    --border: #b8ccdf;
+    --accent: #4a8a08;      /* ACR Lime darkened for contrast */
+    --accent2: #006e6a;     /* ACR Teal darkened */
+    --acr-blue: #003087;    /* ACR Blue */
+    --text: #071424;
+    --muted: #4e6e8a;
+    --danger: #c94040;
+    --code-bg: #e2edf8;
+  }
+
+  *, *::before, *::after {
+    transition: background-color 0.25s ease, border-color 0.25s ease, color 0.2s ease;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ─── Header ─── */
+  header {
+    padding: 20px 32px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--surface);
+    border-top: 3px solid var(--acr-blue);
+  }
+  .logo-mark {
+    width: 36px; height: 36px;
+    background: var(--acr-blue);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700; color: #fff;
+    flex-shrink: 0;
+  }
+  header h1 {
+    font-family: 'Fraunces', serif;
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  header span {
+    color: var(--muted);
+    font-size: 0.75rem;
+    margin-left: 4px;
+  }
+  /* ─── Theme toggle ─── */
+  .theme-toggle {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    width: 52px;
+    height: 28px;
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0;
+    outline: none;
+  }
+  .theme-toggle::after {
+    content: '';
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--accent2);
+    transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), background 0.2s;
+  }
+  :root.light .theme-toggle::after {
+    transform: translateX(24px);
+  }
+  .theme-toggle .toggle-icon {
+    position: absolute;
+    top: 50%; transform: translateY(-50%);
+    font-size: 11px;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .toggle-icon.moon { left: 6px; opacity: 1; }
+  .toggle-icon.sun  { right: 5px; opacity: 0; }
+  :root.light .toggle-icon.moon { opacity: 0; }
+  :root.light .toggle-icon.sun  { opacity: 1; }
+
+  .pill {
+    margin-left: auto;
+    background: rgba(26,86,196,0.15);
+    border: 1px solid rgba(26,86,196,0.4);
+    color: var(--acr-blue);
+    padding: 4px 12px;
+    border-radius: 99px;
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  :root.light .pill {
+    background: rgba(0,48,135,0.08);
+    border-color: rgba(0,48,135,0.3);
+    color: var(--acr-blue);
+  }
+
+  /* ─── Main layout ─── */
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 0;
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* ─── Left panel ─── */
+  .left {
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+  }
+
+  .section-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  /* Describe area */
+  .input-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .input-card textarea {
+    width: 100%;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.85rem;
+    padding: 14px;
+    resize: vertical;
+    min-height: 110px;
+    line-height: 1.6;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .input-card textarea:focus { border-color: var(--accent); }
+  .input-card textarea::placeholder { color: var(--muted); }
+
+  .row { display: flex; gap: 10px; margin-top: 12px; align-items: center; }
+
+  .btn-primary {
+    background: var(--acr-blue);
+    color: #fff;
+    border: none;
+    padding: 10px 22px;
+    border-radius: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    letter-spacing: 0.03em;
+  }
+  .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .btn-ghost:hover { color: var(--text); border-color: var(--muted); }
+
+  /* Quick categories */
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .cat-chip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    text-align: left;
+  }
+  .cat-chip:hover { border-color: var(--acr-blue); background: var(--surface2); }
+  .cat-chip .cat-icon { font-size: 1.2rem; display: block; margin-bottom: 4px; }
+  .cat-chip .cat-name { font-size: 0.72rem; color: var(--text); line-height: 1.3; }
+  .cat-chip .cat-hts { font-size: 0.65rem; color: var(--accent2); margin-top: 2px; }
+
+  /* Result card */
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    display: none;
+  }
+  .result-card.visible { display: block; }
+  .result-header {
+    padding: 14px 20px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent2);
+    flex-shrink: 0;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+  .result-header span { font-size: 0.75rem; color: var(--muted); }
+
+  .result-body { padding: 20px; }
+
+  .hts-display {
+    font-family: 'Fraunces', serif;
+    font-size: 2.4rem;
+    font-weight: 600;
+    color: var(--accent2);
+    letter-spacing: 0.04em;
+    margin-bottom: 4px;
+  }
+  .hts-desc {
+    font-size: 0.78rem;
+    color: var(--text);
+    margin-bottom: 14px;
+    line-height: 1.5;
+  }
+  .hts-confidence {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(91,207,181,0.1);
+    border: 1px solid rgba(91,207,181,0.25);
+    color: var(--accent2);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    margin-bottom: 16px;
+  }
+
+  .reasoning-block {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    font-size: 0.78rem;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 14px;
+  }
+  .reasoning-block b { color: var(--text); }
+
+  .alt-codes { margin-top: 8px; }
+  .alt-label { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+  .alt-list { display: flex; flex-wrap: wrap; gap: 6px; }
+  .alt-chip {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 0.72rem;
+    color: var(--muted);
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .alt-chip:hover { color: var(--text); border-color: var(--acr-blue); }
+
+  .save-btn {
+    margin-top: 16px;
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .save-btn:hover { background: rgba(150,213,74,0.12); }
+
+  /* Loading shimmer */
+  .loading-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 20px;
+    display: none;
+    text-align: center;
+  }
+  .loading-card.visible { display: block; }
+  .spinner {
+    width: 32px; height: 32px;
+    border: 2px solid var(--border);
+    border-top-color: var(--acr-blue);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 0.78rem; color: var(--muted); }
+  .loading-sub { font-size: 0.68rem; color: var(--muted); opacity: 0.6; margin-top: 4px; }
+
+  /* ─── Right panel — History ─── */
+  .right {
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .right-header {
+    padding: 20px 24px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .right-header h2 {
+    font-family: 'Fraunces', serif;
+    font-size: 1rem;
+    font-weight: 300;
+  }
+  .clear-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 0.68rem;
+    font-family: 'DM Mono', monospace;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: color 0.2s;
+  }
+  .clear-btn:hover { color: var(--danger); }
+
+  .history-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .history-list::-webkit-scrollbar { width: 4px; }
+  .history-list::-webkit-scrollbar-track { background: transparent; }
+  .history-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .hist-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    animation: slideIn 0.25s ease;
+  }
+  @keyframes slideIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+  .hist-item:hover { border-color: var(--acr-blue); }
+  .hist-code { font-size: 1rem; color: var(--accent2); font-weight: 500; }
+  .hist-desc { font-size: 0.68rem; color: var(--muted); margin-top: 3px; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hist-time { font-size: 0.6rem; color: var(--muted); opacity: 0.5; margin-top: 5px; }
+
+  .empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    padding: 24px;
+    text-align: center;
+  }
+  .empty-icon { font-size: 2rem; margin-bottom: 10px; opacity: 0.4; }
+  .empty-text { font-size: 0.72rem; line-height: 1.6; }
+
+  .export-bar {
+    padding: 14px 16px;
+    border-top: 1px solid var(--border);
+  }
+  .export-btn {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px;
+    border-radius: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .export-btn:hover { border-color: var(--acr-blue); color: var(--acr-blue); }
+
+  /* Error */
+  .error-card {
+    background: rgba(224,92,92,0.08);
+    border: 1px solid rgba(224,92,92,0.3);
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 0.78rem;
+    color: #e8a0a0;
+    display: none;
+  }
+  .error-card.visible { display: block; }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .right { max-height: 340px; }
+    .cat-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">H</div>
+  <div>
+    <h1>HTS Code Finder <span>// McNairn · AmerCare Royal</span></h1>
+  </div>
+  <div class="pill">AI-Powered</div>
+  <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle light/dark mode" aria-label="Toggle theme">
+    <span class="toggle-icon moon">🌙</span>
+    <span class="toggle-icon sun">☀️</span>
+  </button>
+</header>
+
+<div class="layout">
+  <!-- LEFT: Input + Result -->
+  <div class="left">
+
+    <!-- Input -->
+    <div>
+      <div class="section-label">Describe your product</div>
+      <div class="input-card">
+        <textarea id="productDesc" placeholder="e.g. 'Bleached kraft paper bags with a grease-resistant coating, used for sandwiches, approximately 6x9 inches — single-ply paper construction'
+
+Tip: Include material (paper/foil/poly), coating/treatment, primary use, and any special features."></textarea>
+        <div class="row">
+          <button class="btn-primary" id="lookupBtn" onclick="lookupHTS()">→ Identify HTS Code</button>
+          <button class="btn-ghost" onclick="clearAll()">Clear</button>
+          <span style="font-size:0.68rem;color:var(--muted);margin-left:auto;">US HTS Schedule</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error -->
+    <div class="error-card" id="errorCard"></div>
+
+    <!-- Loading -->
+    <div class="loading-card" id="loadingCard">
+      <div class="spinner"></div>
+      <div class="loading-text">Analyzing product description…</div>
+      <div class="loading-sub">Consulting US HTS Schedule + McNairn product context</div>
+    </div>
+
+    <!-- Result -->
+    <div class="result-card" id="resultCard">
+      <div class="result-header">
+        <div class="status-dot"></div>
+        <span id="resultMeta">Result</span>
+      </div>
+      <div class="result-body">
+        <div class="hts-display" id="htsCode">—</div>
+        <div class="hts-desc" id="htsDesc">—</div>
+        <div class="hts-confidence" id="htsConf">⬤ High confidence</div>
+        <div class="reasoning-block" id="htsReasoning">—</div>
+        <div class="alt-codes" id="altCodesBlock" style="display:none">
+          <div class="alt-label">Alternative codes to consider</div>
+          <div class="alt-list" id="altList"></div>
+        </div>
+        <button class="save-btn" onclick="saveResult()">+ Save to history</button>
+      </div>
+    </div>
+
+    <!-- Quick categories -->
+    <div>
+      <div class="section-label">Quick-start by product category</div>
+      <div class="cat-grid" id="catGrid"></div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT: History -->
+  <div class="right">
+    <div class="right-header">
+      <h2>Session History</h2>
+      <button class="clear-btn" onclick="clearHistory()">Clear all</button>
+    </div>
+    <div class="history-list" id="historyList">
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">📋</div>
+        <div class="empty-text">No codes yet.<br>Describe a product to get started.</div>
+      </div>
+    </div>
+    <div class="export-bar">
+      <button class="export-btn" onclick="exportCSV()">↓ Export history as CSV</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Quick category reference data ──
+const CATEGORIES = [
+  { icon: '🥖', name: 'Bakery / Bread Bags', hts: '4819.30', desc: 'Paper sacks & bags' },
+  { icon: '🧻', name: 'Deli / Interfolded Sheets', hts: '4818.90', desc: 'Household/sanitary paper' },
+  { icon: '🍖', name: 'Freezer / Butcher Paper', hts: '4811.41', desc: 'Bleached kraft paper, coated' },
+  { icon: '🥩', name: 'Waxed / Steak Paper', hts: '4811.10', desc: 'Tarred/bituminized/asphalt paper' },
+  { icon: '🍳', name: 'Pan Liners / Baking Papers', hts: '4823.20', desc: 'Filter paper & paperboard' },
+  { icon: '🛍️', name: 'Foil Bags / Laminated', hts: '4819.40', desc: 'Bags of paper/paperboard' },
+  { icon: '🥤', name: 'Baking Cups', hts: '4823.69', desc: 'Molded pulp trays/cups' },
+  { icon: '🌮', name: 'Basket Liners (Grease-Resist)', hts: '4811.51', desc: 'Bleached, >150g/m²' },
+  { icon: '🌯', name: 'Sandwich Wraps / Dry Wax', hts: '4811.60', desc: 'Wax-coated paper' },
+];
+
+// ── Render quick categories ──
+const grid = document.getElementById('catGrid');
+CATEGORIES.forEach(cat => {
+  const chip = document.createElement('div');
+  chip.className = 'cat-chip';
+  chip.innerHTML = `<span class="cat-icon">${cat.icon}</span><div class="cat-name">${cat.name}</div><div class="cat-hts">HTS ${cat.hts}</div>`;
+  chip.onclick = () => {
+    document.getElementById('productDesc').value = cat.name;
+    lookupHTS();
+  };
+  grid.appendChild(chip);
+});
+
+// ── State ──
+let history = [];
+let currentResult = null;
+
+// ── Main lookup ──
+async function lookupHTS() {
+  const desc = document.getElementById('productDesc').value.trim();
+  if (!desc) {
+    showError('Please describe your product before looking up an HTS code.');
+    return;
+  }
+
+  hideAll();
+  document.getElementById('loadingCard').classList.add('visible');
+  document.getElementById('lookupBtn').disabled = true;
+
+  const systemPrompt = `You are an expert US HTS (Harmonized Tariff Schedule) classification specialist with deep expertise in food service packaging, paper products, and flexible packaging materials.
+
+You work specifically for McNairn Packaging (a division of AmerCare Royal), which produces:
+- Deli sheets, interfolded tissue, bakery tissue (bleached and natural kraft)
+- Freezer papers, butcher paper, steak paper (white, peach, black)
+- Waxed papers: dry wax, wet wax, MXM dry wax
+- Pan liners and baking papers: parchment, quilon-coated, silicone-coated (QBake, UltraBake, XtraBake, EnviroBake)
+- Bags: sandwich bags, grease-resistant bags, foil bags, bread bags, popcorn bags, hot dog bags
+- Foil laminated products: Insul-Wrap, foil hot dog bags, foil cheeseburger bags
+- Baking cups (paper, artisan, tulip, crown cups)
+- Basket liners: grease-resistant, dry wax printed
+- High-density poly deli pick-up sheets
+
+Respond ONLY with a valid JSON object (no markdown, no backticks) in this exact format:
+{
+  "primary_hts": "XXXX.XX.XXXX",
+  "chapter_desc": "Short description of HTS chapter/heading",
+  "product_desc": "Precise HTS description for this product",
+  "confidence": "high|medium|low",
+  "confidence_reason": "One sentence on why this confidence level",
+  "reasoning": "2-4 sentence explanation of the classification logic, citing key product attributes (material, coating, primary use, construction). Be specific.",
+  "alternative_codes": [
+    {"code": "XXXX.XX.XXXX", "reason": "Brief reason this could also apply"},
+    {"code": "XXXX.XX.XXXX", "reason": "Brief reason"}
+  ],
+  "important_note": "Any binding ruling considerations, duty rate implications, or classification nuances to be aware of (or empty string)"
+}`;
+
+  const userPrompt = `Classify this product for US import/export HTS purposes:
+
+"${desc}"
+
+Consider: Is it paper, foil, poly, or composite? Is it coated (wax, silicone, grease-resistant, poly)? What is its primary end use? Is it a bag, sheet, roll, or cup? What industry uses it?`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }]
+      })
+    });
+
+    if (!response.ok) throw new Error(`API error ${response.status}`);
+
+    const data = await response.json();
+    const raw = data.content.find(b => b.type === 'text')?.text || '';
+    
+    let parsed;
+    try {
+      parsed = JSON.parse(raw.replace(/```json|```/g, '').trim());
+    } catch(e) {
+      throw new Error('Could not parse AI response. Please try again.');
+    }
+
+    displayResult(parsed, desc);
+
+  } catch(err) {
+    hideAll();
+    showError(err.message || 'Something went wrong. Please try again.');
+  } finally {
+    document.getElementById('lookupBtn').disabled = false;
+  }
+}
+
+function displayResult(data, query) {
+  hideAll();
+  currentResult = { ...data, query, timestamp: new Date() };
+
+  document.getElementById('htsCode').textContent = data.primary_hts || '—';
+  document.getElementById('htsDesc').textContent = data.product_desc || data.chapter_desc || '—';
+  
+  const confEl = document.getElementById('htsConf');
+  const confMap = { high: ['⬤ High confidence', '#5bcfb5'], medium: ['◐ Medium confidence', '#e8c547'], low: ['○ Low confidence — verify manually', '#e05c5c'] };
+  const [confText, confColor] = confMap[data.confidence] || confMap.medium;
+  confEl.textContent = confText;
+  confEl.style.color = confColor;
+  confEl.style.borderColor = confColor + '44';
+  confEl.style.background = confColor + '14';
+
+  let reasonHTML = `<b>Classification logic:</b><br>${escHtml(data.reasoning || '')}`;
+  if (data.important_note) reasonHTML += `<br><br><b>⚠ Note:</b> ${escHtml(data.important_note)}`;
+  if (data.confidence_reason) reasonHTML += `<br><br><b>Confidence:</b> ${escHtml(data.confidence_reason)}`;
+  document.getElementById('htsReasoning').innerHTML = reasonHTML;
+
+  const alts = data.alternative_codes || [];
+  if (alts.length > 0) {
+    document.getElementById('altCodesBlock').style.display = 'block';
+    const altList = document.getElementById('altList');
+    altList.innerHTML = '';
+    alts.forEach(a => {
+      const chip = document.createElement('div');
+      chip.className = 'alt-chip';
+      chip.title = a.reason;
+      chip.textContent = a.code;
+      chip.onclick = () => {
+        document.getElementById('htsCode').textContent = a.code;
+        document.getElementById('htsDesc').textContent = a.reason;
+      };
+      altList.appendChild(chip);
+    });
+  }
+
+  const meta = `Query: "${query.length > 40 ? query.slice(0,40)+'…' : query}"`;
+  document.getElementById('resultMeta').textContent = meta;
+  document.getElementById('resultCard').classList.add('visible');
+}
+
+function saveResult() {
+  if (!currentResult) return;
+  history.unshift(currentResult);
+  renderHistory();
+  document.querySelector('.save-btn').textContent = '✓ Saved!';
+  setTimeout(() => { document.querySelector('.save-btn').textContent = '+ Save to history'; }, 1500);
+}
+
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  const empty = document.getElementById('emptyState');
+  
+  if (history.length === 0) {
+    empty.style.display = 'flex';
+    Array.from(list.querySelectorAll('.hist-item')).forEach(e => e.remove());
+    return;
+  }
+  
+  empty.style.display = 'none';
+  list.innerHTML = '';
+  history.forEach((item, i) => {
+    const div = document.createElement('div');
+    div.className = 'hist-item';
+    div.innerHTML = `
+      <div class="hist-code">${escHtml(item.primary_hts)}</div>
+      <div class="hist-desc">${escHtml(item.query)}</div>
+      <div class="hist-time">${item.timestamp.toLocaleTimeString()}</div>
+    `;
+    div.onclick = () => displayResult(item, item.query);
+    list.appendChild(div);
+  });
+}
+
+function clearHistory() {
+  history = [];
+  renderHistory();
+}
+
+function exportCSV() {
+  if (history.length === 0) { alert('No history to export yet.'); return; }
+  const rows = [['HTS Code','Product Description','Query','Confidence','Timestamp']];
+  history.forEach(h => {
+    rows.push([
+      h.primary_hts,
+      `"${(h.product_desc||'').replace(/"/g,'""')}"`,
+      `"${(h.query||'').replace(/"/g,'""')}"`,
+      h.confidence,
+      h.timestamp.toISOString()
+    ]);
+  });
+  const csv = rows.map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `hts-codes-mcnairn-${Date.now()}.csv`;
+  a.click();
+}
+
+function clearAll() {
+  document.getElementById('productDesc').value = '';
+  hideAll();
+  currentResult = null;
+}
+
+function hideAll() {
+  document.getElementById('loadingCard').classList.remove('visible');
+  document.getElementById('resultCard').classList.remove('visible');
+  document.getElementById('errorCard').classList.remove('visible');
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorCard');
+  el.textContent = '⚠ ' + msg;
+  el.classList.add('visible');
+}
+
+function escHtml(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Theme toggle ──
+function toggleTheme() {
+  const isLight = document.documentElement.classList.toggle('light');
+  localStorage.setItem('hts-theme', isLight ? 'light' : 'dark');
+}
+// Restore saved theme
+if (localStorage.getItem('hts-theme') === 'light') {
+  document.documentElement.classList.add('light');
+}
+
+// Enter key shortcut
+document.getElementById('productDesc').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) lookupHTS();
+});
+</script>
+</body>
+</html>
