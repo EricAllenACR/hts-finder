@@ -3,464 +3,117 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HTS Code Finder — McNairn / AmerCare Royal</title>
+<title>HTS Code Finder — McNairn · ACR</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&display=swap" rel="stylesheet">
 <style>
   :root {
-    /* ACR Brand Dark — navy base, Teal + Lime accents */
-    --bg: #060e1a;
-    --surface: #0c1828;
-    --surface2: #112035;
-    --border: #1e3550;
-    --accent: #96d54a;      /* ACR Lime */
-    --accent2: #00c4bb;     /* ACR Teal */
-    --acr-blue: #1a56c4;    /* ACR Blue (bright on dark) */
-    --text: #e8f0f8;
-    --muted: #6a8aaa;
-    --danger: #e05c5c;
-    --code-bg: #040b14;
+    --bg: #060e1a; --surface: #0c1828; --surface2: #112035;
+    --border: #1e3550; --blue: #1a56c4; --teal: #00c4bb;
+    --lime: #96d54a; --text: #e8f0f8; --muted: #6a8aaa;
+    --danger: #e05c5c; --code: #040b14;
   }
-
-  :root.light {
-    /* ACR Brand Light — white base, Blue primary */
-    --bg: #eef3fa;
-    --surface: #ffffff;
-    --surface2: #dce8f5;
-    --border: #b8ccdf;
-    --accent: #4a8a08;      /* ACR Lime darkened for contrast */
-    --accent2: #006e6a;     /* ACR Teal darkened */
-    --acr-blue: #003087;    /* ACR Blue */
-    --text: #071424;
-    --muted: #4e6e8a;
-    --danger: #c94040;
-    --code-bg: #e2edf8;
+  .light {
+    --bg: #eef3fa; --surface: #ffffff; --surface2: #dce8f5;
+    --border: #b8ccdf; --blue: #003087; --teal: #006e6a;
+    --lime: #4a8a08; --text: #071424; --muted: #4e6e8a;
+    --danger: #c94040; --code: #e2edf8;
   }
-
   *, *::before, *::after {
-    transition: background-color 0.25s ease, border-color 0.25s ease, color 0.2s ease;
+    box-sizing: border-box; margin: 0; padding: 0;
+    transition: background-color .22s, border-color .22s, color .18s;
   }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Mono', monospace; min-height: 100vh; display: flex; flex-direction: column; font-size: 14px; }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  /* Header */
+  header { background: var(--surface); border-bottom: 1px solid var(--border); border-top: 3px solid var(--blue); padding: 16px 24px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .logo { width: 34px; height: 34px; background: var(--blue); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 16px; flex-shrink: 0; }
+  h1 { font-family: 'Fraunces', serif; font-size: 1.1rem; font-weight: 600; letter-spacing: -.02em; }
+  h1 span { color: var(--muted); font-size: .72rem; margin-left: 4px; }
+  .pill { background: color-mix(in srgb, var(--blue) 20%, transparent); border: 1px solid color-mix(in srgb, var(--blue) 40%, transparent); color: var(--blue); padding: 3px 10px; border-radius: 99px; font-size: .62rem; letter-spacing: .08em; text-transform: uppercase; }
+  .toggle { margin-left: auto; background: var(--surface2); border: 1px solid var(--border); border-radius: 99px; width: 50px; height: 26px; cursor: pointer; position: relative; flex-shrink: 0; }
+  .knob { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: var(--teal); transition: left .25s cubic-bezier(.34,1.56,.64,1); }
+  .light .knob { left: 27px; }
+  .t-moon { position: absolute; top: 50%; transform: translateY(-50%); left: 6px; font-size: 10px; pointer-events: none; }
+  .t-sun  { position: absolute; top: 50%; transform: translateY(-50%); right: 5px; font-size: 10px; pointer-events: none; opacity: 0; }
+  .light .t-moon { opacity: 0; }
+  .light .t-sun  { opacity: 1; }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'DM Mono', monospace;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
+  /* Layout */
+  .layout { display: flex; flex: 1; overflow: hidden; }
+  .left { flex: 1; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
+  .right { width: 320px; background: var(--surface); border-left: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
 
-  /* ─── Header ─── */
-  header {
-    padding: 20px 32px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    background: var(--surface);
-    border-top: 3px solid var(--acr-blue);
-  }
-  .logo-mark {
-    width: 36px; height: 36px;
-    background: var(--acr-blue);
-    border-radius: 6px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px; font-weight: 700; color: #fff;
-    flex-shrink: 0;
-  }
-  header h1 {
-    font-family: 'Fraunces', serif;
-    font-size: 1.25rem;
-    font-weight: 600;
-    letter-spacing: -0.02em;
-  }
-  header span {
-    color: var(--muted);
-    font-size: 0.75rem;
-    margin-left: 4px;
-  }
-  /* ─── Theme toggle ─── */
-  .theme-toggle {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 99px;
-    width: 52px;
-    height: 28px;
-    cursor: pointer;
-    position: relative;
-    flex-shrink: 0;
-    outline: none;
-  }
-  .theme-toggle::after {
-    content: '';
-    position: absolute;
-    top: 3px; left: 3px;
-    width: 20px; height: 20px;
-    border-radius: 50%;
-    background: var(--accent2);
-    transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), background 0.2s;
-  }
-  :root.light .theme-toggle::after {
-    transform: translateX(24px);
-  }
-  .theme-toggle .toggle-icon {
-    position: absolute;
-    top: 50%; transform: translateY(-50%);
-    font-size: 11px;
-    pointer-events: none;
-    transition: opacity 0.2s;
-  }
-  .toggle-icon.moon { left: 6px; opacity: 1; }
-  .toggle-icon.sun  { right: 5px; opacity: 0; }
-  :root.light .toggle-icon.moon { opacity: 0; }
-  :root.light .toggle-icon.sun  { opacity: 1; }
+  /* Misc */
+  .label { font-size: .6rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .card  { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
 
-  .pill {
-    margin-left: auto;
-    background: rgba(26,86,196,0.15);
-    border: 1px solid rgba(26,86,196,0.4);
-    color: var(--acr-blue);
-    padding: 4px 12px;
-    border-radius: 99px;
-    font-size: 0.68rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-  :root.light .pill {
-    background: rgba(0,48,135,0.08);
-    border-color: rgba(0,48,135,0.3);
-    color: var(--acr-blue);
-  }
+  textarea { width: 100%; background: var(--code); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Mono', monospace; font-size: .82rem; padding: 12px; resize: vertical; min-height: 100px; line-height: 1.6; outline: none; }
+  textarea:focus { border-color: var(--blue); }
 
-  /* ─── Main layout ─── */
-  .layout {
-    display: grid;
-    grid-template-columns: 1fr 380px;
-    gap: 0;
-    flex: 1;
-    min-height: 0;
-  }
+  .row { display: flex; gap: 8px; margin-top: 10px; align-items: center; flex-wrap: wrap; }
+  .btn-p { background: var(--blue); color: #fff; border: none; padding: 9px 20px; border-radius: 8px; font-family: inherit; font-size: .78rem; font-weight: 500; cursor: pointer; }
+  .btn-p:hover { opacity: .88; }
+  .btn-p:disabled { opacity: .4; cursor: not-allowed; }
+  .btn-g { background: transparent; color: var(--muted); border: 1px solid var(--border); padding: 9px 14px; border-radius: 8px; font-family: inherit; font-size: .78rem; cursor: pointer; }
+  .btn-g:hover { color: var(--text); border-color: var(--muted); }
+  .hint { font-size: .62rem; color: var(--muted); margin-left: auto; }
 
-  /* ─── Left panel ─── */
-  .left {
-    padding: 32px;
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-    border-right: 1px solid var(--border);
-    overflow-y: auto;
-  }
+  /* Category grid */
+  .cat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .cat { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px; cursor: pointer; }
+  .cat:hover { border-color: var(--blue); }
+  .cat-icon { font-size: 1.1rem; display: block; margin-bottom: 3px; }
+  .cat-name { font-size: .68rem; color: var(--text); line-height: 1.3; }
+  .cat-hts  { font-size: .62rem; color: var(--teal); margin-top: 2px; }
 
-  .section-label {
-    font-size: 0.65rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 10px;
-  }
+  /* Result */
+  .res-header { padding: 10px 16px; background: var(--surface2); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--teal); animation: pulse 2s infinite; flex-shrink: 0; }
+  .res-meta { font-size: .68rem; color: var(--muted); }
+  .res-body { padding: 18px; }
+  .hts-num { font-family: 'Fraunces', serif; font-size: 2.2rem; font-weight: 600; color: var(--teal); letter-spacing: .04em; margin-bottom: 2px; }
+  .hts-desc { font-size: .75rem; margin-bottom: 12px; line-height: 1.5; }
+  .badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 6px; font-size: .68rem; margin-bottom: 14px; border: 1px solid; }
+  .reasoning { background: var(--code); border: 1px solid var(--border); border-radius: 8px; padding: 12px; font-size: .75rem; color: var(--muted); line-height: 1.7; margin-bottom: 12px; }
+  .alt-label { font-size: .6rem; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 6px; }
+  .alt-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .alt-chip { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 4px 9px; font-size: .7rem; color: var(--muted); cursor: pointer; }
+  .alt-chip:hover { border-color: var(--blue); color: var(--text); }
+  .save-btn { background: transparent; border: 1px solid var(--lime); color: var(--lime); padding: 7px 16px; border-radius: 8px; font-family: inherit; font-size: .72rem; cursor: pointer; }
+  .save-btn.saved { border-color: var(--teal); color: var(--teal); cursor: default; }
 
-  /* Describe area */
-  .input-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 20px;
-  }
-  .input-card textarea {
-    width: 100%;
-    background: var(--code-bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
-    font-family: 'DM Mono', monospace;
-    font-size: 0.85rem;
-    padding: 14px;
-    resize: vertical;
-    min-height: 110px;
-    line-height: 1.6;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-  .input-card textarea:focus { border-color: var(--accent); }
-  .input-card textarea::placeholder { color: var(--muted); }
+  /* Loading / error */
+  .loading { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 28px 20px; text-align: center; }
+  .spinner { width: 28px; height: 28px; border: 2px solid var(--border); border-top-color: var(--blue); border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto 12px; }
+  .error { background: color-mix(in srgb, var(--danger) 12%, transparent); border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent); border-radius: 10px; padding: 12px 16px; font-size: .75rem; color: #f0a0a0; }
+  .light .error { color: #8b1a1a; }
+  .notice { background: color-mix(in srgb, var(--blue) 12%, transparent); border: 1px solid color-mix(in srgb, var(--blue) 30%, transparent); border-radius: 8px; padding: 10px 14px; font-size: .7rem; color: var(--muted); line-height: 1.6; }
 
-  .row { display: flex; gap: 10px; margin-top: 12px; align-items: center; }
-
-  .btn-primary {
-    background: var(--acr-blue);
-    color: #fff;
-    border: none;
-    padding: 10px 22px;
-    border-radius: 8px;
-    font-family: 'DM Mono', monospace;
-    font-size: 0.8rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: opacity 0.2s, transform 0.1s;
-    letter-spacing: 0.03em;
-  }
-  .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
-  .btn-primary:active { transform: translateY(0); }
-  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-
-  .btn-ghost {
-    background: transparent;
-    color: var(--muted);
-    border: 1px solid var(--border);
-    padding: 10px 16px;
-    border-radius: 8px;
-    font-family: 'DM Mono', monospace;
-    font-size: 0.8rem;
-    cursor: pointer;
-    transition: color 0.2s, border-color 0.2s;
-  }
-  .btn-ghost:hover { color: var(--text); border-color: var(--muted); }
-
-  /* Quick categories */
-  .cat-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-  }
-  .cat-chip {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 12px;
-    cursor: pointer;
-    transition: border-color 0.2s, background 0.2s;
-    text-align: left;
-  }
-  .cat-chip:hover { border-color: var(--acr-blue); background: var(--surface2); }
-  .cat-chip .cat-icon { font-size: 1.2rem; display: block; margin-bottom: 4px; }
-  .cat-chip .cat-name { font-size: 0.72rem; color: var(--text); line-height: 1.3; }
-  .cat-chip .cat-hts { font-size: 0.65rem; color: var(--accent2); margin-top: 2px; }
-
-  /* Result card */
-  .result-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    overflow: hidden;
-    display: none;
-  }
-  .result-card.visible { display: block; }
-  .result-header {
-    padding: 14px 20px;
-    background: var(--surface2);
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .status-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--accent2);
-    flex-shrink: 0;
-    animation: pulse 2s infinite;
-  }
-  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
-  .result-header span { font-size: 0.75rem; color: var(--muted); }
-
-  .result-body { padding: 20px; }
-
-  .hts-display {
-    font-family: 'Fraunces', serif;
-    font-size: 2.4rem;
-    font-weight: 600;
-    color: var(--accent2);
-    letter-spacing: 0.04em;
-    margin-bottom: 4px;
-  }
-  .hts-desc {
-    font-size: 0.78rem;
-    color: var(--text);
-    margin-bottom: 14px;
-    line-height: 1.5;
-  }
-  .hts-confidence {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(91,207,181,0.1);
-    border: 1px solid rgba(91,207,181,0.25);
-    color: var(--accent2);
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 0.7rem;
-    margin-bottom: 16px;
-  }
-
-  .reasoning-block {
-    background: var(--code-bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 14px;
-    font-size: 0.78rem;
-    color: var(--muted);
-    line-height: 1.7;
-    margin-bottom: 14px;
-  }
-  .reasoning-block b { color: var(--text); }
-
-  .alt-codes { margin-top: 8px; }
-  .alt-label { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
-  .alt-list { display: flex; flex-wrap: wrap; gap: 6px; }
-  .alt-chip {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 5px 10px;
-    font-size: 0.72rem;
-    color: var(--muted);
-    cursor: pointer;
-    transition: color 0.2s, border-color 0.2s;
-  }
-  .alt-chip:hover { color: var(--text); border-color: var(--acr-blue); }
-
-  .save-btn {
-    margin-top: 16px;
-    background: transparent;
-    border: 1px solid var(--accent);
-    color: var(--accent);
-    padding: 8px 18px;
-    border-radius: 8px;
-    font-family: 'DM Mono', monospace;
-    font-size: 0.75rem;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-  .save-btn:hover { background: rgba(150,213,74,0.12); }
-
-  /* Loading shimmer */
-  .loading-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 28px 20px;
-    display: none;
-    text-align: center;
-  }
-  .loading-card.visible { display: block; }
-  .spinner {
-    width: 32px; height: 32px;
-    border: 2px solid var(--border);
-    border-top-color: var(--acr-blue);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    margin: 0 auto 12px;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .loading-text { font-size: 0.78rem; color: var(--muted); }
-  .loading-sub { font-size: 0.68rem; color: var(--muted); opacity: 0.6; margin-top: 4px; }
-
-  /* ─── Right panel — History ─── */
-  .right {
-    background: var(--surface);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-  .right-header {
-    padding: 20px 24px 14px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .right-header h2 {
-    font-family: 'Fraunces', serif;
-    font-size: 1rem;
-    font-weight: 300;
-  }
-  .clear-btn {
-    background: none;
-    border: none;
-    color: var(--muted);
-    font-size: 0.68rem;
-    font-family: 'DM Mono', monospace;
-    cursor: pointer;
-    padding: 4px 8px;
-    border-radius: 4px;
-    transition: color 0.2s;
-  }
+  /* History panel */
+  .rh { padding: 16px 20px 12px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .rh h2 { font-family: 'Fraunces', serif; font-size: .95rem; font-weight: 300; }
+  .clear-btn { background: none; border: none; color: var(--muted); font-size: .65rem; font-family: inherit; cursor: pointer; }
   .clear-btn:hover { color: var(--danger); }
+  .hist-list { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 7px; }
+  .hist-list::-webkit-scrollbar { width: 4px; }
+  .hist-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .hi { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; cursor: pointer; animation: fadeIn .2s ease; }
+  .hi:hover { border-color: var(--blue); }
+  .hi-code { font-size: .95rem; color: var(--teal); font-weight: 500; }
+  .hi-desc { font-size: .65rem; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hi-time { font-size: .58rem; color: var(--muted); opacity: .5; margin-top: 4px; }
+  .empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--muted); padding: 24px; text-align: center; }
+  .exp-bar { padding: 12px 14px; border-top: 1px solid var(--border); }
+  .exp-btn { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 9px; border-radius: 8px; font-family: inherit; font-size: .72rem; cursor: pointer; }
+  .exp-btn:hover { border-color: var(--blue); color: var(--blue); }
 
-  .history-list {
-    flex: 1;
-    overflow-y: auto;
-    padding: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .history-list::-webkit-scrollbar { width: 4px; }
-  .history-list::-webkit-scrollbar-track { background: transparent; }
-  .history-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+  @keyframes spin   { to{transform:rotate(360deg)} }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
 
-  .hist-item {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 12px;
-    cursor: pointer;
-    transition: border-color 0.2s;
-    animation: slideIn 0.25s ease;
-  }
-  @keyframes slideIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
-  .hist-item:hover { border-color: var(--acr-blue); }
-  .hist-code { font-size: 1rem; color: var(--accent2); font-weight: 500; }
-  .hist-desc { font-size: 0.68rem; color: var(--muted); margin-top: 3px; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .hist-time { font-size: 0.6rem; color: var(--muted); opacity: 0.5; margin-top: 5px; }
-
-  .empty-state {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: var(--muted);
-    padding: 24px;
-    text-align: center;
-  }
-  .empty-icon { font-size: 2rem; margin-bottom: 10px; opacity: 0.4; }
-  .empty-text { font-size: 0.72rem; line-height: 1.6; }
-
-  .export-bar {
-    padding: 14px 16px;
-    border-top: 1px solid var(--border);
-  }
-  .export-btn {
-    width: 100%;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 10px;
-    border-radius: 8px;
-    font-family: 'DM Mono', monospace;
-    font-size: 0.75rem;
-    cursor: pointer;
-    transition: border-color 0.2s;
-  }
-  .export-btn:hover { border-color: var(--acr-blue); color: var(--acr-blue); }
-
-  /* Error */
-  .error-card {
-    background: rgba(224,92,92,0.08);
-    border: 1px solid rgba(224,92,92,0.3);
-    border-radius: 10px;
-    padding: 14px 18px;
-    font-size: 0.78rem;
-    color: #e8a0a0;
-    display: none;
-  }
-  .error-card.visible { display: block; }
-
-  @media (max-width: 900px) {
-    .layout { grid-template-columns: 1fr; }
-    .right { max-height: 340px; }
+  @media (max-width: 820px) {
+    .layout { flex-direction: column; }
+    .right { width: 100%; max-height: 300px; border-left: none; border-top: 1px solid var(--border); }
     .cat-grid { grid-template-columns: repeat(2, 1fr); }
   }
 </style>
@@ -468,137 +121,114 @@
 <body>
 
 <header>
-  <div class="logo-mark">H</div>
-  <div>
-    <h1>HTS Code Finder <span>// McNairn · AmerCare Royal</span></h1>
-  </div>
+  <div class="logo">A</div>
+  <div><h1>HTS Code Finder <span>// McNairn · ACR</span></h1></div>
   <div class="pill">AI-Powered</div>
-  <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle light/dark mode" aria-label="Toggle theme">
-    <span class="toggle-icon moon">🌙</span>
-    <span class="toggle-icon sun">☀️</span>
+  <button class="toggle" id="themeBtn" onclick="toggleTheme()" aria-label="Toggle theme">
+    <div class="knob" id="knob"></div>
+    <span class="t-moon">🌙</span>
+    <span class="t-sun">☀️</span>
   </button>
 </header>
 
 <div class="layout">
-  <!-- LEFT: Input + Result -->
+  <!-- LEFT -->
   <div class="left">
 
-    <!-- Input -->
     <div>
-      <div class="section-label">Describe your product</div>
-      <div class="input-card">
-        <textarea id="productDesc" placeholder="e.g. 'Bleached kraft paper bags with a grease-resistant coating, used for sandwiches, approximately 6x9 inches — single-ply paper construction'
+      <div class="label">Describe your product</div>
+      <div class="card">
+        <textarea id="desc" placeholder='e.g. "Bleached kraft paper bags with a grease-resistant coating, used for sandwiches, approx 6x9 inches — single-ply paper construction"
 
-Tip: Include material (paper/foil/poly), coating/treatment, primary use, and any special features."></textarea>
+Tip: Include material, coating/treatment, primary use, and construction.'></textarea>
         <div class="row">
-          <button class="btn-primary" id="lookupBtn" onclick="lookupHTS()">→ Identify HTS Code</button>
-          <button class="btn-ghost" onclick="clearAll()">Clear</button>
-          <span style="font-size:0.68rem;color:var(--muted);margin-left:auto;">US HTS Schedule</span>
+          <button class="btn-p" id="goBtn" onclick="lookup()">→ Identify HTS Code</button>
+          <button class="btn-g" onclick="clearAll()">Clear</button>
+          <span class="hint">Ctrl+Enter to submit</span>
         </div>
       </div>
     </div>
 
-    <!-- Error -->
-    <div class="error-card" id="errorCard"></div>
+    <div id="errorBox" style="display:none" class="error"></div>
 
-    <!-- Loading -->
-    <div class="loading-card" id="loadingCard">
+    <div id="loadBox" style="display:none" class="loading">
       <div class="spinner"></div>
-      <div class="loading-text">Analyzing product description…</div>
-      <div class="loading-sub">Consulting US HTS Schedule + McNairn product context</div>
+      <div style="font-size:.75rem;color:var(--muted)">Analyzing product description…</div>
+      <div style="font-size:.65rem;color:var(--muted);opacity:.6;margin-top:4px">Consulting US HTS Schedule + McNairn product context</div>
     </div>
 
-    <!-- Result -->
-    <div class="result-card" id="resultCard">
-      <div class="result-header">
-        <div class="status-dot"></div>
-        <span id="resultMeta">Result</span>
-      </div>
-      <div class="result-body">
-        <div class="hts-display" id="htsCode">—</div>
-        <div class="hts-desc" id="htsDesc">—</div>
-        <div class="hts-confidence" id="htsConf">⬤ High confidence</div>
-        <div class="reasoning-block" id="htsReasoning">—</div>
-        <div class="alt-codes" id="altCodesBlock" style="display:none">
+    <div id="resultBox" style="display:none" class="card" style="padding:0">
+      <div class="res-header"><div class="dot"></div><span class="res-meta" id="resMeta"></span></div>
+      <div class="res-body">
+        <div class="hts-num" id="htsNum"></div>
+        <div class="hts-desc" id="htsDesc"></div>
+        <div class="badge" id="confBadge"></div>
+        <div class="reasoning" id="reasoning"></div>
+        <div id="altBlock" style="display:none">
           <div class="alt-label">Alternative codes to consider</div>
           <div class="alt-list" id="altList"></div>
         </div>
-        <button class="save-btn" onclick="saveResult()">+ Save to history</button>
+        <button class="save-btn" id="saveBtn" onclick="saveResult()">+ Save to history</button>
       </div>
     </div>
 
-    <!-- Quick categories -->
     <div>
-      <div class="section-label">Quick-start by product category</div>
+      <div class="label">Quick-start by product category</div>
       <div class="cat-grid" id="catGrid"></div>
+    </div>
+
+    <div class="notice">
+      ⚖️ <strong>Important:</strong> HTS classification has legal and duty implications.
+      Always confirm codes with a licensed customs broker or the USITC before using on import/export documentation.
     </div>
 
   </div>
 
   <!-- RIGHT: History -->
   <div class="right">
-    <div class="right-header">
+    <div class="rh">
       <h2>Session History</h2>
       <button class="clear-btn" onclick="clearHistory()">Clear all</button>
     </div>
-    <div class="history-list" id="historyList">
-      <div class="empty-state" id="emptyState">
-        <div class="empty-icon">📋</div>
-        <div class="empty-text">No codes yet.<br>Describe a product to get started.</div>
+    <div class="hist-list" id="histList">
+      <div class="empty" id="emptyState">
+        <div style="font-size:1.8rem;margin-bottom:8px;opacity:.35">📋</div>
+        <div style="font-size:.7rem;line-height:1.6">No codes yet.<br>Describe a product to get started.</div>
       </div>
     </div>
-    <div class="export-bar">
-      <button class="export-btn" onclick="exportCSV()">↓ Export history as CSV</button>
+    <div class="exp-bar">
+      <button class="exp-btn" id="expBtn" onclick="exportCSV()">↓ Export history as CSV</button>
     </div>
   </div>
 </div>
 
 <script>
-// ── Quick category reference data ──
-const CATEGORIES = [
-  { icon: '🥖', name: 'Bakery / Bread Bags', hts: '4819.30', desc: 'Paper sacks & bags' },
-  { icon: '🧻', name: 'Deli / Interfolded Sheets', hts: '4818.90', desc: 'Household/sanitary paper' },
-  { icon: '🍖', name: 'Freezer / Butcher Paper', hts: '4811.41', desc: 'Bleached kraft paper, coated' },
-  { icon: '🥩', name: 'Waxed / Steak Paper', hts: '4811.10', desc: 'Tarred/bituminized/asphalt paper' },
-  { icon: '🍳', name: 'Pan Liners / Baking Papers', hts: '4823.20', desc: 'Filter paper & paperboard' },
-  { icon: '🛍️', name: 'Foil Bags / Laminated', hts: '4819.40', desc: 'Bags of paper/paperboard' },
-  { icon: '🥤', name: 'Baking Cups', hts: '4823.69', desc: 'Molded pulp trays/cups' },
-  { icon: '🌮', name: 'Basket Liners (Grease-Resist)', hts: '4811.51', desc: 'Bleached, >150g/m²' },
-  { icon: '🌯', name: 'Sandwich Wraps / Dry Wax', hts: '4811.60', desc: 'Wax-coated paper' },
+// ── Categories ──────────────────────────────────────────────────
+const CATS = [
+  {icon:'🥖', name:'Bakery / Bread Bags',          hts:'4819.30'},
+  {icon:'🧻', name:'Deli / Interfolded Sheets',     hts:'4818.90'},
+  {icon:'🍖', name:'Freezer / Butcher Paper',       hts:'4811.41'},
+  {icon:'🥩', name:'Waxed / Steak Paper',           hts:'4811.10'},
+  {icon:'🍳', name:'Pan Liners / Baking Papers',    hts:'4823.20'},
+  {icon:'🛍️', name:'Foil Bags / Laminated',        hts:'4819.40'},
+  {icon:'🥤', name:'Baking Cups',                   hts:'4823.69'},
+  {icon:'🌮', name:'Basket Liners (Grease-Resist)', hts:'4811.51'},
+  {icon:'🌯', name:'Sandwich Wraps / Dry Wax',      hts:'4811.60'},
 ];
-
-// ── Render quick categories ──
-const grid = document.getElementById('catGrid');
-CATEGORIES.forEach(cat => {
-  const chip = document.createElement('div');
-  chip.className = 'cat-chip';
-  chip.innerHTML = `<span class="cat-icon">${cat.icon}</span><div class="cat-name">${cat.name}</div><div class="cat-hts">HTS ${cat.hts}</div>`;
-  chip.onclick = () => {
-    document.getElementById('productDesc').value = cat.name;
-    lookupHTS();
-  };
-  grid.appendChild(chip);
+CATS.forEach(c => {
+  const el = document.createElement('div');
+  el.className = 'cat';
+  el.innerHTML = `<span class="cat-icon">${c.icon}</span><div class="cat-name">${c.name}</div><div class="cat-hts">HTS ${c.hts}</div>`;
+  el.onclick = () => { document.getElementById('desc').value = c.name; lookup(c.name); };
+  document.getElementById('catGrid').appendChild(el);
 });
 
-// ── State ──
-let history = [];
-let currentResult = null;
+// ── State ────────────────────────────────────────────────────────
+let history = [], current = null, savedTs = new Set();
 
-// ── Main lookup ──
-async function lookupHTS() {
-  const desc = document.getElementById('productDesc').value.trim();
-  if (!desc) {
-    showError('Please describe your product before looking up an HTS code.');
-    return;
-  }
+const SYSTEM = `You are an expert US HTS (Harmonized Tariff Schedule) classification specialist with deep expertise in food service packaging, paper products, and flexible packaging materials.
 
-  hideAll();
-  document.getElementById('loadingCard').classList.add('visible');
-  document.getElementById('lookupBtn').disabled = true;
-
-  const systemPrompt = `You are an expert US HTS (Harmonized Tariff Schedule) classification specialist with deep expertise in food service packaging, paper products, and flexible packaging materials.
-
-You work specifically for McNairn Packaging (a division of AmerCare Royal), which produces:
+You work specifically for McNairn Packaging (a division of AmerCare Royal / ACR), which produces:
 - Deli sheets, interfolded tissue, bakery tissue (bleached and natural kraft)
 - Freezer papers, butcher paper, steak paper (white, peach, black)
 - Waxed papers: dry wax, wet wax, MXM dry wax
@@ -609,197 +239,167 @@ You work specifically for McNairn Packaging (a division of AmerCare Royal), whic
 - Basket liners: grease-resistant, dry wax printed
 - High-density poly deli pick-up sheets
 
-Respond ONLY with a valid JSON object (no markdown, no backticks) in this exact format:
+Respond ONLY with a valid JSON object (no markdown, no backticks):
 {
   "primary_hts": "XXXX.XX.XXXX",
-  "chapter_desc": "Short description of HTS chapter/heading",
+  "chapter_desc": "Short HTS chapter description",
   "product_desc": "Precise HTS description for this product",
   "confidence": "high|medium|low",
-  "confidence_reason": "One sentence on why this confidence level",
-  "reasoning": "2-4 sentence explanation of the classification logic, citing key product attributes (material, coating, primary use, construction). Be specific.",
+  "confidence_reason": "One sentence on confidence level",
+  "reasoning": "2-4 sentences citing key attributes: material, coating, use, construction.",
   "alternative_codes": [
-    {"code": "XXXX.XX.XXXX", "reason": "Brief reason this could also apply"},
-    {"code": "XXXX.XX.XXXX", "reason": "Brief reason"}
+    {"code": "XXXX.XX.XXXX", "reason": "Why this could also apply"}
   ],
-  "important_note": "Any binding ruling considerations, duty rate implications, or classification nuances to be aware of (or empty string)"
+  "important_note": "Classification nuances, duty implications, or empty string"
 }`;
 
-  const userPrompt = `Classify this product for US import/export HTS purposes:
+// ── Lookup ───────────────────────────────────────────────────────
+async function lookup(override) {
+  const q = (override ?? document.getElementById('desc').value).trim();
+  if (!q) { showError('Please describe your product first.'); return; }
 
-"${desc}"
-
-Consider: Is it paper, foil, poly, or composite? Is it coated (wax, silicone, grease-resistant, poly)? What is its primary end use? Is it a bag, sheet, roll, or cup? What industry uses it?`;
+  hide('errorBox'); hide('resultBox'); show('loadBox');
+  document.getElementById('goBtn').disabled = true;
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch('/api/chat', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: userPrompt }]
+        systemPrompt: SYSTEM,
+        prompt: `Classify this product for US import/export HTS purposes:\n\n"${q}"\n\nConsider: material (paper/foil/poly/composite), any coating (wax/silicone/grease-resistant/poly), primary end use, form (bag/sheet/roll/cup), and industry.`
       })
     });
 
-    if (!response.ok) throw new Error(`API error ${response.status}`);
+    if (!res.ok) throw new Error(`Server error ${res.status}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
 
-    const data = await response.json();
-    const raw = data.content.find(b => b.type === 'text')?.text || '';
-    
-    let parsed;
-    try {
-      parsed = JSON.parse(raw.replace(/```json|```/g, '').trim());
-    } catch(e) {
-      throw new Error('Could not parse AI response. Please try again.');
-    }
+    const parsed = JSON.parse(data.text.replace(/```json|```/g,'').trim());
+    current = {...parsed, query: q, ts: new Date()};
+    showResult(current);
 
-    displayResult(parsed, desc);
-
-  } catch(err) {
-    hideAll();
-    showError(err.message || 'Something went wrong. Please try again.');
+  } catch(e) {
+    hide('loadBox');
+    showError(e.message || 'Something went wrong. Please try again.');
   } finally {
-    document.getElementById('lookupBtn').disabled = false;
+    document.getElementById('goBtn').disabled = false;
   }
 }
 
-function displayResult(data, query) {
-  hideAll();
-  currentResult = { ...data, query, timestamp: new Date() };
+function showResult(r) {
+  hide('loadBox');
+  document.getElementById('htsNum').textContent = r.primary_hts || '—';
+  document.getElementById('htsDesc').textContent = r.product_desc || r.chapter_desc || '—';
+  document.getElementById('resMeta').textContent = `"${r.query.length > 50 ? r.query.slice(0,50)+'…' : r.query}"`;
 
-  document.getElementById('htsCode').textContent = data.primary_hts || '—';
-  document.getElementById('htsDesc').textContent = data.product_desc || data.chapter_desc || '—';
-  
-  const confEl = document.getElementById('htsConf');
-  const confMap = { high: ['⬤ High confidence', '#5bcfb5'], medium: ['◐ Medium confidence', '#e8c547'], low: ['○ Low confidence — verify manually', '#e05c5c'] };
-  const [confText, confColor] = confMap[data.confidence] || confMap.medium;
-  confEl.textContent = confText;
-  confEl.style.color = confColor;
-  confEl.style.borderColor = confColor + '44';
-  confEl.style.background = confColor + '14';
+  const confMap = {
+    high:   {label:'⬤ High confidence',       color:'#00c4bb'},
+    medium: {label:'◐ Medium confidence',      color:'#96d54a'},
+    low:    {label:'○ Low — verify manually',  color:'#e05c5c'},
+  };
+  const cf = confMap[r.confidence] || confMap.medium;
+  const badge = document.getElementById('confBadge');
+  badge.textContent = cf.label;
+  badge.style.color = cf.color;
+  badge.style.borderColor = cf.color + '55';
+  badge.style.background = cf.color + '18';
 
-  let reasonHTML = `<b>Classification logic:</b><br>${escHtml(data.reasoning || '')}`;
-  if (data.important_note) reasonHTML += `<br><br><b>⚠ Note:</b> ${escHtml(data.important_note)}`;
-  if (data.confidence_reason) reasonHTML += `<br><br><b>Confidence:</b> ${escHtml(data.confidence_reason)}`;
-  document.getElementById('htsReasoning').innerHTML = reasonHTML;
+  let html = `<strong style="color:var(--text)">Classification logic:</strong><br>${esc(r.reasoning||'')}`;
+  if (r.important_note) html += `<br><br><strong style="color:var(--text)">⚠ Note:</strong> ${esc(r.important_note)}`;
+  if (r.confidence_reason) html += `<br><br><strong style="color:var(--text)">Confidence:</strong> ${esc(r.confidence_reason)}`;
+  document.getElementById('reasoning').innerHTML = html;
 
-  const alts = data.alternative_codes || [];
-  if (alts.length > 0) {
-    document.getElementById('altCodesBlock').style.display = 'block';
-    const altList = document.getElementById('altList');
-    altList.innerHTML = '';
+  const alts = r.alternative_codes || [];
+  if (alts.length) {
+    show('altBlock');
+    const list = document.getElementById('altList');
+    list.innerHTML = '';
     alts.forEach(a => {
       const chip = document.createElement('div');
-      chip.className = 'alt-chip';
-      chip.title = a.reason;
-      chip.textContent = a.code;
+      chip.className = 'alt-chip'; chip.title = a.reason; chip.textContent = a.code;
       chip.onclick = () => {
-        document.getElementById('htsCode').textContent = a.code;
+        document.getElementById('htsNum').textContent = a.code;
         document.getElementById('htsDesc').textContent = a.reason;
       };
-      altList.appendChild(chip);
+      list.appendChild(chip);
     });
-  }
+  } else hide('altBlock');
 
-  const meta = `Query: "${query.length > 40 ? query.slice(0,40)+'…' : query}"`;
-  document.getElementById('resultMeta').textContent = meta;
-  document.getElementById('resultCard').classList.add('visible');
+  const btn = document.getElementById('saveBtn');
+  btn.className = savedTs.has(r.ts?.toISOString()) ? 'save-btn saved' : 'save-btn';
+  btn.textContent = savedTs.has(r.ts?.toISOString()) ? '✓ Saved' : '+ Save to history';
+
+  show('resultBox');
 }
 
 function saveResult() {
-  if (!currentResult) return;
-  history.unshift(currentResult);
+  if (!current || savedTs.has(current.ts.toISOString())) return;
+  history.unshift(current);
+  savedTs.add(current.ts.toISOString());
   renderHistory();
-  document.querySelector('.save-btn').textContent = '✓ Saved!';
-  setTimeout(() => { document.querySelector('.save-btn').textContent = '+ Save to history'; }, 1500);
+  document.getElementById('saveBtn').className = 'save-btn saved';
+  document.getElementById('saveBtn').textContent = '✓ Saved';
 }
 
 function renderHistory() {
-  const list = document.getElementById('historyList');
-  const empty = document.getElementById('emptyState');
-  
-  if (history.length === 0) {
-    empty.style.display = 'flex';
-    Array.from(list.querySelectorAll('.hist-item')).forEach(e => e.remove());
-    return;
-  }
-  
-  empty.style.display = 'none';
-  list.innerHTML = '';
-  history.forEach((item, i) => {
-    const div = document.createElement('div');
-    div.className = 'hist-item';
-    div.innerHTML = `
-      <div class="hist-code">${escHtml(item.primary_hts)}</div>
-      <div class="hist-desc">${escHtml(item.query)}</div>
-      <div class="hist-time">${item.timestamp.toLocaleTimeString()}</div>
-    `;
-    div.onclick = () => displayResult(item, item.query);
-    list.appendChild(div);
+  const list = document.getElementById('histList');
+  document.getElementById('emptyState').style.display = history.length ? 'none' : 'flex';
+  Array.from(list.querySelectorAll('.hi')).forEach(e => e.remove());
+  history.forEach(h => {
+    const el = document.createElement('div');
+    el.className = 'hi';
+    el.innerHTML = `<div class="hi-code">${esc(h.primary_hts)}</div><div class="hi-desc">${esc(h.query)}</div><div class="hi-time">${h.ts.toLocaleTimeString()}</div>`;
+    el.onclick = () => { current = h; showResult(h); };
+    list.appendChild(el);
   });
 }
 
-function clearHistory() {
-  history = [];
-  renderHistory();
-}
+function clearHistory() { history = []; savedTs = new Set(); renderHistory(); }
 
 function exportCSV() {
-  if (history.length === 0) { alert('No history to export yet.'); return; }
+  if (!history.length) { alert('No history to export yet.'); return; }
   const rows = [['HTS Code','Product Description','Query','Confidence','Timestamp']];
-  history.forEach(h => {
-    rows.push([
-      h.primary_hts,
-      `"${(h.product_desc||'').replace(/"/g,'""')}"`,
-      `"${(h.query||'').replace(/"/g,'""')}"`,
-      h.confidence,
-      h.timestamp.toISOString()
-    ]);
-  });
-  const csv = rows.map(r => r.join(',')).join('\n');
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `hts-codes-mcnairn-${Date.now()}.csv`;
-  a.click();
+  history.forEach(h => rows.push([
+    h.primary_hts,
+    `"${(h.product_desc||'').replace(/"/g,'""')}"`,
+    `"${(h.query||'').replace(/"/g,'""')}"`,
+    h.confidence,
+    h.ts.toISOString()
+  ]));
+  const blob = new Blob([rows.map(r=>r.join(',')).join('\n')], {type:'text/csv'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `hts-codes-acr-${Date.now()}.csv`; a.click();
+  const btn = document.getElementById('expBtn');
+  btn.textContent = '✓ Downloaded!';
+  setTimeout(() => btn.textContent = '↓ Export history as CSV', 2000);
 }
 
 function clearAll() {
-  document.getElementById('productDesc').value = '';
-  hideAll();
-  currentResult = null;
-}
-
-function hideAll() {
-  document.getElementById('loadingCard').classList.remove('visible');
-  document.getElementById('resultCard').classList.remove('visible');
-  document.getElementById('errorCard').classList.remove('visible');
+  document.getElementById('desc').value = '';
+  hide('errorBox'); hide('resultBox'); hide('loadBox');
+  current = null;
 }
 
 function showError(msg) {
-  const el = document.getElementById('errorCard');
-  el.textContent = '⚠ ' + msg;
-  el.classList.add('visible');
+  const el = document.getElementById('errorBox');
+  el.textContent = '⚠ ' + msg; show('errorBox'); hide('loadBox');
 }
 
-function escHtml(str) {
-  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
+function show(id) { document.getElementById(id).style.display = 'block'; }
+function hide(id) { document.getElementById(id).style.display = 'none'; }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-// ── Theme toggle ──
+// ── Theme ────────────────────────────────────────────────────────
 function toggleTheme() {
-  const isLight = document.documentElement.classList.toggle('light');
-  localStorage.setItem('hts-theme', isLight ? 'light' : 'dark');
+  document.body.classList.toggle('light');
+  localStorage.setItem('acr-theme', document.body.classList.contains('light') ? 'light' : 'dark');
 }
-// Restore saved theme
-if (localStorage.getItem('hts-theme') === 'light') {
-  document.documentElement.classList.add('light');
-}
+if (localStorage.getItem('acr-theme') === 'light') document.body.classList.add('light');
 
-// Enter key shortcut
-document.getElementById('productDesc').addEventListener('keydown', e => {
-  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) lookupHTS();
+// ── Keyboard shortcut ────────────────────────────────────────────
+document.getElementById('desc').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) lookup();
 });
 </script>
 </body>
